@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>3D Кітапхана - Мобильді нұсқа</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Базовые стили */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        html {
+            font-size: 16px;
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a3a 0%, #0d1b2a 100%);
+            color: #f1f1f1;
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        
+        /* Хедер */
+        .header {
+            text-align: center;
+            padding: 20px 15px;
+            background-color: rgba(0, 30, 60, 0.9);
+            border-bottom: 3px solid #f39c12;
+            position: relative;
+            width: 100%;
+        }
+        
+        .header h1 {
+            font-size: clamp(1.8rem, 5vw, 2.8rem);
+            margin-bottom: 10px;
+            color: #f39c12;
+            text-shadow: 0 0 10px rgba(243, 156, 18, 0.5);
+            word-wrap: break-word;
+        }
+        
+        .header p {
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+            color: #e0e0e0;
+            padding: 0 10px;
+        }
+        
+        /* Мобильное меню */
+        .mobile-menu-btn {
+            display: none;
+            position: absolute;
+            top: 20px;
+            right: 15px;
+            background: #f39c12;
+            color: #1a2a3a;
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 100;
+        }
+        
+        .mobile-nav {
+            display: none;
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 70%;
+            max-width: 300px;
+            height: 100vh;
+            background: rgba(10, 25, 40, 0.98);
+            z-index: 99;
+            padding: 80px 20px 20px;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        .mobile-nav.active {
+            transform: translateX(0);
+        }
+        
+        .mobile-nav a {
+            display: block;
+            color: #f1f1f1;
+            text-decoration: none;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            background: rgba(243, 156, 18, 0.1);
+            border-left: 4px solid #f39c12;
+            font-size: 1.1rem;
+        }
+        
+        .mobile-nav a:hover {
+            background: rgba(243, 156, 18, 0.3);
+        }
+        
+        /* Контейнер */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px 15px;
+            width: 100%;
+        }
+        
+        /* 3D Книжная полка */
+        .bookshelf-container {
+            perspective: 1000px;
+            margin: 30px auto;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 400px;
+            padding: 10px;
+        }
+        
+        .bookshelf {
+            position: relative;
+            width: min(800px, 95vw);
+            height: clamp(250px, 50vw, 400px);
+            transform-style: preserve-3d;
+            transform: rotateX(15deg) rotateY(-10deg);
+            transition: transform 0.5s ease;
+        }
+        
+        .shelf {
+            position: absolute;
+            width: 100%;
+            height: clamp(15px, 4vw, 25px);
+            background: linear-gradient(to bottom, #8B4513, #A0522D, #8B4513);
+            border-radius: 3px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        .shelf-1 {
+            bottom: 0;
+            transform: translateZ(0);
+        }
+        
+        .shelf-2 {
+            bottom: clamp(80px, 30%, 120px);
+            transform: translateZ(0);
+        }
+        
+        .shelf-3 {
+            bottom: clamp(160px, 60%, 240px);
+            transform: translateZ(0);
+        }
+        
+        .books {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+        }
+        
+        .book {
+            position: absolute;
+            width: clamp(40px, 8vw, 70px);
+            height: clamp(120px, 25vw, 200px);
+            cursor: pointer;
+            transform-style: preserve-3d;
+            transition: transform 0.5s ease, box-shadow 0.3s ease;
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        .book:hover, .book:active {
+            transform: translateZ(20px) rotateY(5deg);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.7);
+        }
+        
+        .book-spine {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: clamp(9px, 2vw, 16px);
+            text-align: center;
+            padding: clamp(5px, 1vw, 10px);
+            overflow: hidden;
+            backface-visibility: hidden;
+            word-break: break-word;
+            line-height: 1.2;
+        }
+        
+        .book-front {
+            position: absolute;
+            width: clamp(8px, 2vw, 15px);
+            height: 100%;
+            right: clamp(-8px, -2vw, -15px);
+            transform-origin: left;
+            transform: rotateY(90deg);
+            background: repeating-linear-gradient(
+                45deg,
+                #f1f1f1,
+                #f1f1f1 5px,
+                #e0e0e0 5px,
+                #e0e0e0 10px
+            );
+        }
+        
+        .book-top {
+            position: absolute;
+            width: 100%;
+            height: clamp(8px, 2vw, 15px);
+            top: clamp(-8px, -2vw, -15px);
+            transform-origin: bottom;
+            transform: rotateX(90deg);
+            background: #f1f1f1;
+        }
+        
+        /* Позиции книг для адаптивности */
+        .book-1 { background-color: #3498db; left: 5%; bottom: clamp(15px, 5%, 25px); }
+        .book-2 { background-color: #2ecc71; left: 15%; bottom: clamp(15px, 5%, 25px); }
+        .book-3 { background-color: #e74c3c; left: 25%; bottom: clamp(15px, 5%, 25px); }
+        .book-4 { background-color: #f39c12; left: 35%; bottom: clamp(15px, 5%, 25px); }
+        .book-5 { background-color: #9b59b6; left: 45%; bottom: clamp(15px, 5%, 25px); }
+        .book-6 { background-color: #1abc9c; left: 55%; bottom: clamp(15px, 5%, 25px); }
+        .book-7 { background-color: #34495e; left: 65%; bottom: clamp(15px, 5%, 25px); }
+        
+        .book-8 { background-color: #e67e22; left: 10%; bottom: clamp(95px, 35%, 145px); }
+        .book-9 { background-color: #16a085; left: 20%; bottom: clamp(95px, 35%, 145px); }
+        .book-10 { background-color: #c0392b; left: 30%; bottom: clamp(95px, 35%, 145px); }
+        .book-11 { background-color: #8e44ad; left: 40%; bottom: clamp(95px, 35%, 145px); }
+        .book-12 { background-color: #2c3e50; left: 50%; bottom: clamp(95px, 35%, 145px); }
+        .book-13 { background-color: #27ae60; left: 60%; bottom: clamp(95px, 35%, 145px); }
+        .book-14 { background-color: #2980b9; left: 70%; bottom: clamp(95px, 35%, 145px); }
+        
+        .book-15 { background-color: #d35400; left: 15%; bottom: clamp(175px, 65%, 265px); }
+        .book-16 { background-color: #7f8c8d; left: 25%; bottom: clamp(175px, 65%, 265px); }
+        .book-17 { background-color: #2c3e50; left: 35%; bottom: clamp(175px, 65%, 265px); }
+        .book-18 { background-color: #f1c40f; left: 45%; bottom: clamp(175px, 65%, 265px); }
+        .book-19 { background-color: #3498db; left: 55%; bottom: clamp(175px, 65%, 265px); }
+        .book-20 { background-color: #e74c3c; left: 65%; bottom: clamp(175px, 65%, 265px); }
+        
+        /* Модальное окно */
+        .message-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .message-content {
+            background: linear-gradient(135deg, #1a2a3a 0%, #0d1b2a 100%);
+            padding: clamp(25px, 5vw, 40px);
+            border-radius: 15px;
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+            border: 3px solid #f39c12;
+            box-shadow: 0 0 30px rgba(243, 156, 18, 0.5);
+            transform: translateY(0);
+            animation: slideUp 0.5s ease;
+            margin: auto;
+        }
+        
+        .message-icon {
+            font-size: clamp(3rem, 10vw, 4rem);
+            color: #f39c12;
+            margin-bottom: 20px;
+            animation: bounce 1s infinite alternate;
+        }
+        
+        .message-content h2 {
+            font-size: clamp(1.6rem, 5vw, 2.2rem);
+            margin-bottom: 15px;
+            color: #f39c12;
+        }
+        
+        .message-content p {
+            font-size: clamp(1.1rem, 3vw, 1.3rem);
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+        
+        .close-btn {
+            background-color: #f39c12;
+            color: #1a2a3a;
+            border: none;
+            padding: clamp(10px, 3vw, 12px) clamp(20px, 5vw, 30px);
+            font-size: clamp(1rem, 3vw, 1.1rem);
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            width: 100%;
+            max-width: 200px;
+            margin: 0 auto;
+        }
+        
+        .close-btn:hover, .close-btn:active {
+            background-color: #e67e22;
+            transform: scale(1.05);
+        }
+        
+        /* Инструкции */
+        .instructions {
+            text-align: center;
+            margin: 25px auto;
+            padding: 20px;
+            background-color: rgba(0, 30, 60, 0.5);
+            border-radius: 10px;
+            max-width: 800px;
+            border-left: 4px solid #f39c12;
+            width: 100%;
+        }
+        
+        .instructions h3 {
+            color: #f39c12;
+            margin-bottom: 10px;
+            font-size: clamp(1.3rem, 4vw, 1.5rem);
+        }
+        
+        .instructions p {
+            font-size: clamp(1rem, 3vw, 1.1rem);
+            line-height: 1.6;
+        }
+        
+        /* Счетчик книг */
+        .book-counter {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(243, 156, 18, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px auto;
+            max-width: 800px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .counter-item {
+            text-align: center;
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        .counter-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #f39c12;
+        }
+        
+        .counter-label {
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+        
+        /* Футер */
+        .footer {
+            text-align: center;
+            padding: 25px 15px;
+            margin-top: 30px;
+            background-color: rgba(0, 20, 40, 0.9);
+            border-top: 2px solid #f39c12;
+            width: 100%;
+        }
+        
+        .footer p {
+            margin: 10px 0;
+            font-size: clamp(0.9rem, 3vw, 1rem);
+        }
+        
+        /* Анимации */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-15px); }
+        }
+        
+        /* Ориентация устройства */
+        .orientation-warning {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .orientation-content {
+            background: #1a2a3a;
+            padding: 30px;
+            border-radius: 15px;
+            border: 3px solid #f39c12;
+            max-width: 400px;
+        }
+        
+        .orientation-content i {
+            font-size: 3rem;
+            color: #f39c12;
+            margin-bottom: 20px;
+        }
+        
+        .orientation-content h3 {
+            color: #f39c12;
+            margin-bottom: 15px;
+        }
+        
+        /* Медиа-запросы */
+        @media (max-width: 768px) {
+            .mobile-menu-btn {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+            
+            .book-counter {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .counter-item {
+                min-width: 100%;
+                margin-bottom: 15px;
+            }
+            
+            .bookshelf {
+                transform: rotateX(10deg) rotateY(-5deg);
+            }
+            
+            /* Улучшение для тач-устройств */
+            .book {
+                cursor: default;
+            }
+            
+            .book:active {
+                transform: translateZ(15px) rotateY(3deg);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header {
+                padding: 15px 10px;
+            }
+            
+            .container {
+                padding: 15px 10px;
+            }
+            
+            .bookshelf {
+                transform: rotateX(8deg) rotateY(0deg);
+            }
+            
+            .book {
+                width: 35px;
+                height: 110px;
+            }
+            
+            .book-spine {
+                font-size: 8px;
+                padding: 3px;
+            }
+            
+            .message-content {
+                padding: 20px;
+            }
+            
+            .instructions {
+                padding: 15px;
+            }
+        }
+        
+        @media (min-width: 1200px) {
+            html {
+                font-size: 18px;
+            }
+        }
+        
+        /* Портретная ориентация для мобильных */
+        @media (max-height: 600px) and (orientation: portrait) {
+            .bookshelf-container {
+                min-height: 300px;
+            }
+            
+            .bookshelf {
+                height: 250px;
+            }
+        }
+        
+        /* Ландшафтная ориентация */
+        @media (orientation: landscape) and (max-height: 500px) {
+            .header {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+                margin-bottom: 5px;
+            }
+            
+            .bookshelf-container {
+                min-height: 250px;
+                margin: 15px auto;
+            }
+            
+            .instructions {
+                margin: 15px auto;
+                padding: 10px;
+            }
+        }
+        
+        /* Поддержка темной/светлой темы */
+        @media (prefers-color-scheme: light) {
+            body {
+                background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+                color: #333;
+            }
+            
+            .header, .instructions, .footer {
+                background-color: rgba(255, 255, 255, 0.9);
+                color: #333;
+            }
+            
+            .message-content {
+                background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%);
+                color: #333;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Кнопка мобильного меню -->
+    <button class="mobile-menu-btn" id="mobileMenuBtn">
+        <i class="fas fa-bars"></i>
+    </button>
+    
+    <!-- Мобильная навигация -->
+    <div class="mobile-nav" id="mobileNav">
+        <a href="#home"><i class="fas fa-home"></i> Басты бет</a>
+        <a href="#library"><i class="fas fa-book"></i> Кітапхана</a>
+        <a href="#instructions"><i class="fas fa-info-circle"></i> Нұсқаулық</a>
+        <a href="#about"><i class="fas fa-user"></i> Біз туралы</a>
+    </div>
+    
+    <!-- Хедер -->
+    <div class="header" id="home">
+        <h1><i class="fas fa-book-open"></i> 3D Кітапхана</h1>
+        <p>Қазақ тіліндегі кітаптардың виртуалды кітапханасы. Кез келген кітапты алу үшін оның жонға басыңыз.</p>
+    </div>
+    
+    <div class="container">
+        <!-- Счетчик книг -->
+        <div class="book-counter">
+            <div class="counter-item">
+                <div class="counter-number" id="totalBooks">20</div>
+                <div class="counter-label">Барлық кітаптар</div>
+            </div>
+            <div class="counter-item">
+                <div class="counter-number" id="takenBooks">0</div>
+                <div class="counter-label">Алынған кітаптар</div>
+            </div>
+            <div class="counter-item">
+                <div class="counter-number" id="availableBooks">20</div>
+                <div class="counter-label">Қол жетімді кітаптар</div>
+            </div>
+        </div>
+        
+        <!-- Инструкции -->
+        <div class="instructions" id="instructions">
+            <h3><i class="fas fa-info-circle"></i> Қолдану нұсқаулығы</h3>
+            <p>Төмендегі 3D кітап сөресінде әртүрлі кітаптарды көре аласыз. Кітапты алу үшін оған басыңыз немесе шылыңыз. Әрбір кітапты бір рет алуға болады. Алынған кітаптар санақта көрсетіледі.</p>
+        </div>
+        
+        <!-- 3D Книжная полка -->
+        <div class="bookshelf-container" id="library">
+            <div class="bookshelf">
+                <div class="shelf shelf-1"></div>
+                <div class="shelf shelf-2"></div>
+                <div class="shelf shelf-3"></div>
+                
+                <div class="books">
+                    <!-- Первая полка -->
+                    <div class="book book-1" onclick="selectBook('Абай жолы')">
+                        <div class="book-spine">Абай жолы</div>
+                        <div class="book-front"></div>
+                        <div class="book-top"></div>
+                    </div>
+                    <div class="book book-2" onclick="selectBook('Қызыл жебе')">
+                        <div class="book-spine">Қызыл жебе</div>
+                        <div class="book-front"></div>
+                        <div class="book-top"></div>
+                    </div>
+                    <div class="book book-3" onclick="selectBook('Аққулар ұйықтағанда')">
+                        <div class="book-spine">Аққулар ұйықтағанда</div>
+                        <div class="book-front"></div>
+                        <div class="book-top"></div>
+                    </div>
+                    <div class="book book-4" onclick="selectBook('Қараш-Қараш')">
+                        <div class="book-spine">Қараш-Қараш</div>
+                        <div class="book-front"></div>
+                        <div class="book-top"></div>
+                    </div>
+                    <div class="book book-5" onclick="selectBook('Елім-ай')">
+                        <div class="book-spine">Елім-ай</div>
+                        <div class="book-front"></div>
+                        <div class="book-top"></div>
+                    </div>
+                    <div class="book book-6" onclick="selectBook('Тағдыр')">
+                        <div class="book-spine">Тағдыр</div>
+                        <div class="book-front"></div>
+                        <div class="book-top"></div>
+                    </div>
+                    <div class="book book-7" onclick="selectBook('Қан мен тер')">
+                        <div class="book-spine">Қан мен тер</div>
+                        <div class="book-front"></div>
+                        <div class="book-top"></div>
+                    </div>
+                    
+                    <!-- Вторая полка -->
+                    <div class="book book-8" onclick="selectBook('Сыңғырлау')">
+                        <div class="book-spine">Сыңғырлау</div>
+                        <div class="book-front"></div>
+                        <div class="book-top"></div>
+                    </div>
+                    <div class="book book-9" onclick="selectBook('Көксерек')">
+                        <div class="book-spine">Көксерек</div>
+                        <div class="book-front"></div>
+                        <div class="book-top"></div>
+                    </div>
+                    <div class="book book-10" onclick="selectBook('Жетімдер')">
+                        <div class="book-spine">Жетімдер</div>
+                        <div class="book-front"></div>
+                        <div class="book-top"></div>
+                    </div>
+                    <div class="book book-11" onclick="selectBook('Алтын сақа')">
+                        <div class="book-spine">Алтын сақа</div>
+                        <div class="book-front"></div>
+                        <div class="book-top"></div>
+                    </div>
+                    <div class="book book-12" onclick="selectBook('Тәуелсіздік толғауы')">
+                        <div class="book-spine">Тәуелсіздік толғауы</div>
+                        <div class="book-front"></div>
+                        <div class="book-top"></div>
+                    </div>
+                    <div class="book book-13" onclick="selectBook('Махаббат жыры')">
+                        <div class="book-spine">Махаббат жыры</div>
+                        <div class="book-front"></div>
+                        <div class="book-top"></div>
+                    </div>
+                    <div class="book book-14" onclick="selectBook('Көк түн')">
+                        <div class="book-spine">Көк түн</div>
+                        <div class="book-front"></div>
+                        <div class="book-top"></div>
+                    </div>
+                    
+                    <!-- Третья полка -->
+                    <div class="book book-15" onclick="selectBook('Алғыс')">
+                        <div class="book-spine">Алғыс</div>
+                        <div class="book-front"></div>
+                        <div class="book-top"></div>
+                    </div>
+                    <div class="book book-16" onclick="selectBook('Шырайлы әлем')">
+                        <div class="book-spine">Шырайлы әлем</div>
+                        <div class="book-front"></div>
+                        <div class="book-top"></div>
+                    </div>
+                    <div class="book book-17" onclick="selectBook('Дала дастаны')">
+                        <div class="book-spine">Дала дастаны</div>
+                        <div class="book-front"></div>
+                        <div class="book-top"></div>
+                    </div>
+                    <div class="book book-18" onclick="selectBook('Ұлы дала')">
+                        <div class="book-spine">Ұлы дала</div>
+                        <div class="book-front"></div>
+                        <div class="book-top"></div>
+                    </div>
+                    <div class="book book-19" onclick="selectBook('Күншуақ')">
+                        <div class="book-spine">Күншуақ</div>
+                        <div class="book-front"></div>
+                        <div class="book-top"></div>
+                    </div>
+                    <div class="book book-20" onclick="selectBook('Жұлдыздар')">
+                        <div class="book-spine">Жұлдыздар</div>
+                        <div class="book-front"></div>
+                        <div class="book-top"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Дополнительная информация -->
+        <div class="instructions" id="about">
+            <h3><i class="fas fa-mobile-alt"></i> Мобильді қолдау</h3>
+            <p>Бұл сайт барлық құрылғылар үшін оңтайландырылған: смартфондар, планшеттер және компьютерлер. Сайт автоматты түрде сіздің құрылғыңыздың экран өлшеміне бейімделеді.</p>
+        </div>
+    </div>
+    
+    <!-- Футер -->
+    <div class="footer">
+        <p>3D Кітапхана &copy; 2023 | Барлық құқықтар қорғалған</p>
+        <p>Кітап алу үшін жоғарыдағы кітаптардың біреуін таңдаңыз</p>
+        <p><i class="fas fa-mobile-alt"></i> Мобильді нұсқа | <i class="fas fa-tablet-alt"></i> Планшет үшін</p>
+    </div>
+    
+    <!-- Модальное окно -->
+    <div class="message-modal" id="messageModal">
+        <div class="message-content">
+            <div class="message-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h2>Құттықтаймыз!</h2>
+            <p id="messageText">Алаяқтар әлеміне қош келдіңіз!</p>
+            <button class="close-btn" onclick="closeModal()">Жабу</button>
+        </div>
+    </div>
+    
+    <!-- Предупреждение об ориентации -->
+    <div class="orientation-warning" id="orientationWarning">
+        <div class="orientation-content">
+            <i class="fas fa-sync-alt"></i>
+            <h3>Экранды бұрыңыз</h3>
+            <p>Кітап сөресін жақсы көру үшін құрылғыңызды көлденең бағытта ұстаңыз.</p>
+            <p><small>Бұл хабарлама автоматты түрде жасырылады</small></p>
+        </div>
+    </div>
+    
+    <script>
+        // Глобальные переменные
+        let takenBooksCount = 0;
+        const totalBooksCount = 20;
+        let selectedBooks = new Set();
+        
+        // Функция выбора книги
+        function selectBook(bookTitle) {
+            // Проверяем, не была ли книга уже взята
+            if (selectedBooks.has(bookTitle)) {
+                alert(`Сіз "${bookTitle}" кітабын бұрын алып қойғансыз!`);
+                return;
+            }
+            
+            // Добавляем книгу в список взятых
+            selectedBooks.add(bookTitle);
+            takenBooksCount++;
+            
+            // Обновляем счетчики
+            document.getElementById('takenBooks').textContent = takenBooksCount;
+            document.getElementById('availableBooks').textContent = totalBooksCount - takenBooksCount;
+            
+            // Получаем модальное окно и текст сообщения
+            const modal = document.getElementById('messageModal');
+            const messageText = document.getElementById('messageText');
+            
+            // Обновляем текст сообщения с выбранным названием книги
+            messageText.innerHTML = `Сіз "<strong>${bookTitle}</strong>" Алаяқтар әлеміне қош келдіңіз!`;
+            
+            // Показываем модальное окно
+            modal.style.display = 'flex';
+            
+            // Анимация для выбранной книги
+            const selectedBook = event.currentTarget;
+            selectedBook.style.transform = 'translateZ(30px) rotateY(10deg)';
+            selectedBook.style.boxShadow = '0 15px 30px rgba(243, 156, 18, 0.7)';
+            selectedBook.style.backgroundColor = '#7f8c8d'; // Меняем цвет на "взятый"
+            
+            // Сбрасываем анимацию книги после задержки
+            setTimeout(() => {
+                selectedBook.style.transform = 'translateZ(20px) rotateY(5deg)';
+                selectedBook.style.boxShadow = '0 10px 20px rgba(0, 0, 0, 0.7)';
+            }, 500);
+            
+            // Добавляем отметку о взятии
+            selectedBook.innerHTML += '<div style="position: absolute; top: 5px; right: 5px; color: #f39c12; font-size: 12px;"><i class="fas fa-check"></i></div>';
+            
+            // Для мобильных устройств - вибрация (если поддерживается)
+            if (navigator.vibrate) {
+                navigator.vibrate(200);
+            }
+        }
+        
+        // Функция закрытия модального окна
+        function closeModal() {
+            const modal = document.getElementById('messageModal');
+            modal.style.display = 'none';
+            
+            // Для мобильных устройств - короткая вибрация
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+        }
+        
+        // Закрытие модального окна при клике вне его
+        window.onclick = function(event) {
+            const modal = document.getElementById('messageModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+        
+        // Мобильное меню
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileNav = document.getElementById('mobileNav');
+        
+        if (mobileMenuBtn && mobileNav) {
+            mobileMenuBtn.addEventListener('click', function() {
+                mobileNav.classList.toggle('active');
+                this.innerHTML = mobileNav.classList.contains('active') 
+                    ? '<i class="fas fa-times"></i>' 
+                    : '<i class="fas fa-bars"></i>';
+                
+                // Вибрация для мобильных
+                if (navigator.vibrate) {
+                    navigator.vibrate(30);
+                }
+            });
+            
+            // Закрытие меню при клике на ссылку
+            const navLinks = mobileNav.querySelectorAll('a');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    mobileNav.classList.remove('active');
+                    mobileMenuBtn.innerHTML = '<i class="fas fa-bars"></i>';
+                });
+            });
+        }
+        
+        // Интерактивность книжной полки
+        document.addEventListener('DOMContentLoaded', function() {
+            const bookshelf = document.querySelector('.bookshelf');
+            const books = document.querySelectorAll('.book');
+            
+            // Эффект движения мыши для десктопов
+            if (window.innerWidth > 768) {
+                document.addEventListener('mousemove', function(e) {
+                    const xAxis = (window.innerWidth / 2 - e.pageX) / 25;
+                    const yAxis = (window.innerHeight / 2 - e.pageY) / 25;
+                    
+                    bookshelf.style.transform = `rotateX(${15 + yAxis/5}deg) rotateY(${-10 - xAxis/5}deg)`;
+                });
+                
+                document.addEventListener('mouseleave', function() {
+                    bookshelf.style.transform = 'rotateX(15deg) rotateY(-10deg)';
+                });
+            }
+            
+            // Сенсорные события для мобильных устройств
+            let touchStartX = 0;
+            let touchStartY = 0;
+            
+            document.addEventListener('touchstart', function(e) {
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+            }, {passive: true});
+            
+            document.addEventListener('touchmove', function(e) {
+                if (window.innerWidth > 768) {
+                    const touchX = e.touches[0].clientX;
+                    const touchY = e.touches[0].clientY;
+                    
+                    const xAxis = (window.innerWidth / 2 - touchX) / 30;
+                    const yAxis = (window.innerHeight / 2 - touchY) / 30;
+                    
+                    bookshelf.style.transform = `rotateX(${15 + yAxis/5}deg) rotateY(${-10 - xAxis/5}deg)`;
+                }
+            }, {passive: true});
+            
+            document.addEventListener('touchend', function() {
+                if (window.innerWidth > 768) {
+                    bookshelf.style.transform = 'rotateX(15deg) rotateY(-10deg)';
+                }
+            });
+            
+            // Эффект наведения для книг (для десктопов)
+            if (window.innerWidth > 768) {
+                books.forEach(book => {
+                    book.addEventListener('mouseenter', function() {
+                        this.style.animation = 'pulse 0.5s ease-in-out';
+                    });
+                    
+                    book.addEventListener('mouseleave', function() {
+                        this.style.animation = '';
+                    });
+                });
+            }
+            
+            // Проверка ориентации устройства
+            function checkOrientation() {
+                const orientationWarning = document.getElementById('orientationWarning');
+                if (window.innerHeight > window.innerWidth && window.innerWidth < 768) {
+                    // Портретная ориентация на мобильном
+                    orientationWarning.style.display = 'flex';
+                    setTimeout(() => {
+                        orientationWarning.style.display = 'none';
+                    }, 5000);
+                } else {
+                    orientationWarning.style.display = 'none';
+                }
+            }
+            
+            // Проверяем ориентацию при загрузке и изменении размера
+            checkOrientation();
+            window.addEventListener('resize', checkOrientation);
+            window.addEventListener('orientationchange', checkOrientation);
+            
+            // Добавляем CSS для анимации пульса
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes pulse {
+                    0% { transform: translateZ(20px) rotateY(5deg); }
+                    50% { transform: translateZ(25px) rotateY(7deg); }
+                    100% { transform: translateZ(20px) rotateY(5deg); }
+                }
+                
+                /* Улучшение для сенсорных устройств */
+                @media (hover: none) and (pointer: coarse) {
+                    .book:hover {
+                        transform: none;
+                    }
+                    
+                    .book:active {
+                        transform: translateZ(15px) rotateY(3deg) !important;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // Определение типа устройства
+            function detectDevice() {
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                const isTablet = /iPad|Android(?!.*Mobile)|Tablet/i.test(navigator.userAgent);
+                
+                if (isMobile && !isTablet) {
+                    console.log('Мобильное устройство обнаружено');
+                    document.body.classList.add('mobile-device');
+                } else if (isTablet) {
+                    console.log('Планшет обнаружен');
+                    document.body.classList.add('tablet-device');
+                } else {
+                    console.log('Десктоп обнаружен');
+                    document.body.classList.add('desktop-device');
+                }
+            }
+            
+            detectDevice();
+        });
+        
+        // Обработка клавиши Escape для закрытия модального окна
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+                const mobileNav = document.getElementById('mobileNav');
+                if (mobileNav && mobileNav.classList.contains('active')) {
+                    mobileNav.classList.remove('active');
+                    document.getElementById('mobileMenuBtn').innerHTML = '<i class="fas fa-bars"></i>';
+                }
+            }
+        });
+        
+        // Предотвращение контекстного меню на книгах
+        document.addEventListener('contextmenu', function(e) {
+            if (e.target.closest('.book')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+        
+        // Сохранение состояния в localStorage
+        function saveState() {
+            const state = {
+                takenBooks: Array.from(selectedBooks),
+                takenCount: takenBooksCount
+            };
+            localStorage.setItem('libraryState', JSON.stringify(state));
+        }
+        
+        // Загрузка состояния из localStorage
+        function loadState() {
+            const savedState = localStorage.getItem('libraryState');
+            if (savedState) {
+                const state = JSON.parse(savedState);
+                selectedBooks = new Set(state.takenBooks || []);
+                takenBooksCount = state.takenCount || 0;
+                
+                // Обновляем счетчики
+                document.getElementById('takenBooks').textContent = takenBooksCount;
+                document.getElementById('availableBooks').textContent = totalBooksCount - takenBooksCount;
+                
+                // Помечаем взятые книги
+                state.takenBooks.forEach(bookTitle => {
+                    // Находим книгу по названию и помечаем как взятую
+                    const books = document.querySelectorAll('.book');
+                    books.forEach(book => {
+                        if (book.querySelector('.book-spine').textContent === bookTitle) {
+                            book.style.backgroundColor = '#7f8c8d';
+                            book.innerHTML += '<div style="position: absolute; top: 5px; right: 5px; color: #f39c12; font-size: 12px;"><i class="fas fa-check"></i></div>';
+                        }
+                    });
+                });
+            }
+        }
+        
+        // Загружаем состояние при загрузке страницы
+        window.addEventListener('load', loadState);
+        
+        // Сохраняем состояние при закрытии страницы
+        window.addEventListener('beforeunload', saveState);
+        window.addEventListener('pagehide', saveState);
+    </script>
+</body>
+</html>
